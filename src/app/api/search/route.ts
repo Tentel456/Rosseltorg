@@ -4,13 +4,13 @@ import { indexInfo, searchSuppliers } from "@/lib/search";
 
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q") ?? "";
-  const hits = searchSuppliers(query).slice(0, 8);
+  const hits = (await searchSuppliers(query)).slice(0, 8);
   const names = await companyNames(hits.map((hit) => hit.inn));
 
   return NextResponse.json({
     query,
     total: hits.length,
-    index: indexInfo,
+    index: await indexInfo(),
     results: hits.map((hit) => ({ ...hit, name: names[hit.inn] || "" })),
   });
 }

@@ -23,6 +23,7 @@ import {
   Settings,
   ShieldCheck,
   Terminal,
+  Trophy,
   Users,
 } from "lucide-react";
 import { PromptInput } from "@/components/dashboard/Input";
@@ -38,8 +39,8 @@ type SearchResult = {
   status: "proven" | "review" | "risk";
   customers: number;
   channels: string[];
-  codes: string[];
-  snippet: string;
+  matched: number;
+  coverage: number;
 };
 
 const notifications = [
@@ -240,30 +241,63 @@ function HomeView() {
                 ? `${results.length} ${plural(results.length, "поставщик", "поставщика", "поставщиков")} по запросу «${query}»`
                 : `По запросу «${query}» ничего не найдено`}
           </p>
-          <div className="flex flex-col gap-7">
-            {results.map((supplier) => {
+          <div className="mt-8 grid w-full gap-4 self-start">
+            {results.map((supplier, index) => {
               const status = resultStatus[supplier.status];
               return (
-                <article key={supplier.inn}>
-                  <p className="text-[13px] text-white/40">ИНН {supplier.inn}{supplier.kpp ? ` · КПП ${supplier.kpp}` : ""}</p>
-                  <h2 className="mt-1 text-xl font-medium text-sky-300">
-                    {supplier.name || `Поставщик ИНН ${supplier.inn}`}
-                  </h2>
-                  <p className="mt-1.5 max-w-2xl text-sm leading-6 text-white/65">
-                    Исполнял закупку «{supplier.snippet}». {supplier.wins}{" "}
-                    {plural(supplier.wins, "победа", "победы", "побед")} из {supplier.lots}{" "}
-                    {plural(supplier.lots, "лота", "лотов", "лотов")}
-                    {supplier.customers > 0 ? `, ${supplier.customers} ${plural(supplier.customers, "заказчик", "заказчика", "заказчиков")}` : ""}.
-                    {supplier.channels.length ? ` Каналы: ${supplier.channels.join(", ")}.` : ""}
-                  </p>
-                  <div className="mt-2 flex items-center gap-3 text-[13px] text-white/40">
-                    <span>рейтинг {supplier.score}</span>
-                    <span>победы {supplier.winRate}%</span>
-                    <span className={`inline-flex rounded-full px-2.5 py-1 text-[12px] font-medium ${status.tone}`}>
-                      {status.label}
-                    </span>
+                <a
+                  key={supplier.inn}
+                  href={`/supplier/${supplier.inn}`}
+                  className="group rounded-3xl border border-white/10 bg-white/[0.03] p-5 transition-colors hover:border-sky-300/40 hover:bg-white/[0.05]"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex min-w-0 items-start gap-4">
+                      <div className="grid size-12 shrink-0 place-items-center rounded-2xl border border-white/10 bg-black/30 text-sm font-medium text-sky-200">
+                        {String(index + 1).padStart(2, "0")}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[13px] text-white/40">ИНН {supplier.inn}{supplier.kpp ? ` · КПП ${supplier.kpp}` : ""}</p>
+                        <h2 className="mt-1 truncate text-xl font-medium text-white group-hover:text-sky-200">
+                          {supplier.name || `Поставщик ИНН ${supplier.inn}`}
+                        </h2>
+                      </div>
+                    </div>
+                    <ArrowUpRight className="size-5 shrink-0 text-white/30 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-sky-200" />
                   </div>
-                </article>
+
+                  <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
+                      <div className="flex items-center justify-between text-xs text-white/40">
+                        <span>Рейтинг</span>
+                        <Trophy className="size-3.5" />
+                      </div>
+                      <p className="mt-2 text-2xl font-medium">{supplier.score}</p>
+                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+                        <div className="h-full rounded-full bg-sky-300" style={{ width: `${supplier.score}%` }} />
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
+                      <p className="text-xs text-white/40">Победы</p>
+                      <p className="mt-2 text-2xl font-medium">{supplier.winRate}%</p>
+                      <p className="mt-1 text-xs text-white/35">{supplier.wins} из {supplier.lots} лотов</p>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
+                      <p className="text-xs text-white/40">Заказчики</p>
+                      <p className="mt-2 text-2xl font-medium">{supplier.customers}</p>
+                      <p className="mt-1 text-xs text-white/35">{supplier.channels.join(" · ") || "канал не указан"}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <span className={`rounded-full px-2.5 py-1 text-[12px] font-medium ${status.tone}`}>{status.label}</span>
+                    {supplier.coverage < 1 && (
+                      <span className="rounded-full bg-white/10 px-2.5 py-1 text-[12px] text-white/60">
+                        совпало {supplier.matched} {plural(supplier.matched, "слово", "слова", "слов")}
+                      </span>
+                    )}
+                    <span className="ml-auto text-[13px] text-white/35 transition-colors group-hover:text-white/70">Открыть карточку</span>
+                  </div>
+                </a>
               );
             })}
           </div>
